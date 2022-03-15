@@ -56,6 +56,9 @@ e + geom_violin(aes(fill = group), trim = FALSE) + geom_jitter(height = 0, width
                                                                          geom="errorbar", color="yellow", width=0.3, lwd = 1.2) +
   stat_summary(fun.y=mean, geom="point", color="yellow", cex = 4)
 
+# VIEW THE PLOT 
+https://user-images.githubusercontent.com/83617878/158435703-2198e569-8dff-45a2-b32d-c9f18e0f9929.JPG
+
 # ANOVA tests
 analysis = lm(rating~as.factor(group),data=data)
 anova(analysis)
