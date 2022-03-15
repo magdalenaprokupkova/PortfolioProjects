@@ -1,0 +1,79 @@
+# assessing the effectiveness of several remote mathematics curricula for primary school students
+# 330 primary-school students are randomly assigned to one of 5 conditions
+# each group contains 66 students
+# there are 5 conditions
+    #1) T	Traditional classroom, real-time and interactive
+    #2) R	Traditional classroom, but recorded and passively watched
+    #3) A	Specially-designed active learning curriculum, with additional guided online activities
+    #4) Y	Specially-curated YouTube videos
+    #5) W	Paper workbooks, sent via post every week
+# dependent variable is engagement rating - average mathematics engagement level between 1 and 7 rated by parents
+# interest: Is there evidence that the conditions differ in engagement levels?
+
+# creating appropriate graph to visualize the data
+# violin plot with SE bars would be suitable
+
+# assigning group as factor
+library(ggplot2)
+df <- data
+df$group <- as.factor(df$group)
+head(df)
+
+# checking data summary
+data_summary <- function(data, rating, group){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, group, .fun=summary_func,
+                  score)
+  data_sum <- rename(data_sum, c("mean" = score))
+  return(data_sum)
+}
+
+
+df2 <- data_summary
+df2$group <- as.factor(df2$group)
+head(df, 5)
+
+
+# Initiate a ggplot
+
+e <- ggplot(df, aes(x = group, y = rating)) + theme(text = element_text(size = 20)) 
+
+
+e + geom_violin(aes(fill = group), trim = FALSE) + geom_jitter(height = 0, width = 0.1,pch=19, col="black", cex=3) + theme(text = element_text(size = 20)) + theme(legend.position = "none") + scale_y_continuous(breaks = seq(0, 9, by = 1)) + theme(
+    panel.background = element_rect(fill = "#BFD5E3", colour = "#6D9EC1",
+                                    size = 2, linetype = "solid"),
+    panel.grid.major = element_line(size = 0.5, linetype = 'solid',
+                                    colour = "white"), 
+    panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                    colour = "white")
+  )  + stat_summary(
+    fun.data = "mean_sdl",  fun.args = list(mult = 1), 
+    geom = "errorbar", color = "red", width=0.2, lwd = 1) + stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+                                                                         geom="errorbar", color="yellow", width=0.3, lwd = 1.2) +
+  stat_summary(fun.y=mean, geom="point", color="yellow", cex = 4)
+
+# ANOVA tests
+analysis = lm(rating~as.factor(group),data=data)
+anova(analysis)
+
+plot(analysis, which = 1) # residuals vs fitted values, varinace is relatively homogenous for all groups
+plot(analysis, which = 2) # Q Q plot (quantile quantile plot) # there is skew 
+#lets look at the skew in more detail
+
+resids = rstandard(analysis)
+hist(resids)# there is positive right-hand skew in the data
+
+# one-way ANOVA with Tukey HSD pairwise comparisons:
+TukeyHSD(aov(analysis))
+# indicated a significant effect of group (MSE= 0.983, F(4,335)= 6.518, p= 4.625e-05)
+# these groups are significantly different from one another
+# 4-1 (p = 0.007), 3-2 (p = 0.014), 4-2 (p = 0.000167) and 5-4 (p = 0.007)
+
+# A Kruskal-Wallis rank sum test
+kruskal.test(rating ~ group, data = data)
+# indicated a significant effect of group (χ2(4)= 41.699,p= 1.926e-08)
+
